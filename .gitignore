@@ -427,3 +427,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+RebootManager.vcxitems
+RebootManager.vcxitems.filters

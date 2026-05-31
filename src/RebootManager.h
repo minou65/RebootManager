@@ -1,44 +1,21 @@
-#pragma once
+#ifndef REBOOT_MANAGER_H
+#define REBOOT_MANAGER_H
 
 #include <Arduino.h>
-#include <Preferences.h>
-#include <esp_system.h>
 
 /**
  * @brief Manages reboot information and history for ESP32 devices.
- *
- * Stores and loads reboot counter and reboot reasons from device preferences.
- * Provides easy access to human-readable reboot reason descriptions.
- * Automatically logs the current reboot reason at startup.
  */
 class RebootManager {
 public:
     /**
-     * @brief Logs the current reboot reason and increments the reboot counter.
+     * @brief Initializes the RebootManager and records the current reboot.
      *
-     * Should be called once during system startup.
-     * Automatically detects the current reset reason, stores it, and prints it to Serial.
+     * Loads previous reboot information from NVS, increments the reboot counter,
+     * stores the current reset reason, and updates internal state.
+     * Should be called once at the start of setup().
      */
-    static void logRebootReason();
-
-    /**
-     * @brief Loads reboot information from device preferences.
-     *
-     * Typically called once during system startup.
-     */
-    static void load();
-
-    /**
-     * @brief Saves current reboot information to device preferences.
-     */
-    static void save();
-
-    /**
-     * @brief Increments reboot counter by 1 and records the reason.
-     *
-     * @param reason The ESP32 reboot reason (e.g., ESP_RST_POWERON)
-     */
-    static void recordReboot(uint32_t reason);
+    static void begin();
 
     /**
      * @brief Returns the number of reboots recorded so far.
@@ -77,4 +54,16 @@ public:
 private:
     static uint32_t _rebootCount;
     static uint32_t _lastRebootReason;
+
+    /**
+     * @brief Saves current reboot information to NVS.
+     */
+    static void save();
+
+    /**
+     * @brief Loads reboot information from NVS.
+     */
+    static void load();
 };
+
+#endif // REBOOT_MANAGER_H

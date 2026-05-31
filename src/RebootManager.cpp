@@ -1,52 +1,43 @@
 #include "RebootManager.h"
+#include <Preferences.h>
+#include <esp_system.h>
 
 // Definition of static member variables
 uint32_t RebootManager::_rebootCount = 0;
 uint32_t RebootManager::_lastRebootReason = 0;
 
-void RebootManager::logRebootReason() {
-    Preferences prefs_;
-    prefs_.begin("system", false);
+void RebootManager::begin() {
+	load();
+	
+    esp_reset_reason_t reason_ = esp_reset_reason();
 
     // Increment reboot count
-    uint32_t rebootCount_ = prefs_.getUInt("reboots", 0);
-    rebootCount_++;
-    prefs_.putUInt("reboots", rebootCount_);
-
-    // Store last reboot reason
-    esp_reset_reason_t reason_ = esp_reset_reason();
-    prefs_.putUInt("last_reason", (uint32_t)reason_);
-
-    prefs_.end();
-
+    _rebootCount++;
     _lastRebootReason = (uint32_t)reason_;
-
-    // Print reboot information to Serial
-    Serial.print("Reboot reason: ");
-    Serial.println(getRebootReasonText((uint32_t)reason_));
-    Serial.println("Reboot count: " + String(_rebootCount));
-}
-
-void RebootManager::load() {
-    Preferences prefs_;
-    prefs_.begin("system", true);
-    _rebootCount = prefs_.getUInt("reboots", 0);
-    _lastRebootReason = prefs_.getUInt("last_reason", 0);
-    prefs_.end();
+    save();
 }
 
 void RebootManager::save() {
     Preferences prefs_;
-    prefs_.begin("system", false);
+    if (!prefs_.begin("RebootManager", false)) {
+        return;
+    }
+
     prefs_.putUInt("reboots", _rebootCount);
     prefs_.putUInt("last_reason", _lastRebootReason);
     prefs_.end();
 }
 
-void RebootManager::recordReboot(uint32_t reason) {
-    _rebootCount++;
-    _lastRebootReason = reason;
-    save();
+void RebootManager::load() {
+    Preferences prefs_;
+    if (!prefs_.begin("RebootManager", false)) {
+        _rebootCount = 0;
+        _lastRebootReason = 0;
+        return;
+    }
+    _rebootCount = prefs_.getUInt("reboots", 0);
+    _lastRebootReason = prefs_.getUInt("last_reason", 0);
+    prefs_.end();
 }
 
 uint32_t RebootManager::getRebootCount() {
